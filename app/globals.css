@@ -11,11 +11,7 @@
   }
 }
 
-body {
-  @apply bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300 antialiased;
-}
 
-/* Custom Scrollbar for that "Developer" feel */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -26,7 +22,7 @@ body {
   @apply bg-zinc-300 dark:bg-zinc-700 rounded-full;
 }
 
-/* Infinite Marquee Animation */
+
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
