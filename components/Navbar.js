@@ -94,14 +94,7 @@ export default function Navbar() {
         {/* ACTIONS */}
         <div className="flex items-center gap-4 z-50">
           {/* Theme Toggle (Optional, simplified for cleanliness) */}
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:scale-105 transition-transform"
-          >
-            <span className="sr-only">Toggle theme</span>
-            {theme === 'dark' ? "🌙" : "☀️"}
-            <div className="w-3 h-3 rounded-full bg-current" />
-          </button>
+          
 
           {/* CTA Button */}
           {/* Detail: Subtle shine effect and scale on hover */}
