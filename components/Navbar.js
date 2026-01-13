@@ -56,7 +56,7 @@ export default function Navbar() {
         {/* LOGO */}
         {/* Detail: Tracking toggler makes it feel premium. Added a group for hover effect. */}
         <a href="#" className="group relative z-50">
-          <div className="text-2xl font-black tracking-tighter text-zinc-900 dark:text-white flex items-center gap-1">
+          <div className="text-2xl font-black tracking-tighter text-zinc-900 flex items-center gap-1">
             EIGHTY8
             <span className="text-[#FF4F00] transition-transform duration-300 group-hover:rotate-12">
               /
