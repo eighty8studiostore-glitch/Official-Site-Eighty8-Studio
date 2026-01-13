@@ -34,12 +34,12 @@ export default function Hero() {
 
         {/* CTA Buttons (Static) */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-          <button className="px-8 py-4 bg-zinc-900  text-white font-bold rounded-full hover:bg-zinc-800  transition-colors">
+          <a href="tel:+918080228441" className="px-8 py-4 bg-zinc-900  text-white font-bold rounded-full hover:bg-zinc-800  transition-colors">
             <span className="flex items-center justify-center gap-2 hover:gap-5 transition-all">
               GET STARTED FOR FREE
               <ArrowRight size={18} />
             </span>
-          </button>
+          </a>
 
 
         </div>

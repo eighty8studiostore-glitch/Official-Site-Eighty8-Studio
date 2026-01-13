@@ -3,10 +3,12 @@
 import { useState, useRef } from "react";
 import { Check, ArrowUpRight } from "lucide-react";
 import Image from "next/image";
+import Router, { useRouter } from "next/router";
 
 export default function ProductShowcase() {
   // State to track if the user is hovering over the media area
   const [isHovered, setIsHovered] = useState(false);
+  const router = useRouter();
   
   // Ref to control the video element directly
   const videoRef = useRef(null);
@@ -81,7 +83,7 @@ export default function ProductShowcase() {
 
             {/* CTA Button */}
             <div>
-              <button className="group flex items-center gap-3 px-8 py-4 bg-zinc-900 text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg shadow-black/5 hover:shadow-xl hover:translate-y-[-2px]">
+              <button onClick={router.push('/oneclick')} className="group flex items-center gap-3 px-8 py-4 bg-zinc-900 text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg shadow-black/5 hover:shadow-xl hover:translate-y-[-2px]">
                 Book Your Demo Now 
                 <ArrowUpRight className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" size={20} />
               </button>

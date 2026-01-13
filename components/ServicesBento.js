@@ -45,7 +45,7 @@ export default function ServicesBento() {
           <span className="text-blue-600 dark:text-blue-400 font-semibold tracking-wider text-sm uppercase mb-2 block">
             What We Deliver
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-zinc-900 dark:text-white mb-6 leading-tight">
+          <h2 className="text-4xl md:text-5xl font-bold text-zinc-900  mb-6 leading-tight">
             Our Expertise
           </h2>
           <p className="text-zinc-600 dark:text-zinc-400 text-lg leading-relaxed">

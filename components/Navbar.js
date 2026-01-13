@@ -32,7 +32,7 @@ export default function Navbar() {
   }, [isOpen]);
 
   const navLinks = [
-    { name: "Latest Product", href: "#latest" },
+    { name: "1 Click ERP", href: "/oneclick" },
     { name: "Services", href: "#services" },
     { name: "About", href: "#about" },
     { name: "Contact", href: "#contact" },
