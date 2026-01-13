@@ -3,9 +3,9 @@ import Image from "next/image";
 
 const clients = [
   { name: "Indian Dental Association", src: "/clients/ida.png" },
-  { name: "Tauri", src: "/clients/tauri.svg" },
-  { name: "Rust", src: "/clients/rust.svg" },
-  { name: "React", src: "/clients/react.svg" }
+  { name: "Raghvendra Hospital", src: "/clients/tauri.svg" },
+  // { name: "Rust", src: "/clients/rust.svg" },
+  // { name: "React", src: "/clients/react.svg" }
 ];
 
 export default function ClientGrid() {

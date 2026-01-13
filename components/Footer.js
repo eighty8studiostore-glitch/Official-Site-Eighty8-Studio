@@ -36,10 +36,10 @@ export default function Footer() {
           </div>
 
           <div className="flex flex-col justify-end items-start lg:items-end">
-            <button className="group relative px-8 py-4 bg-white text-zinc-950 text-lg font-medium rounded-sm hover:bg-zinc-200 transition-all duration-300 flex items-center gap-3">
+            <a href="tel:+918080228441" className="group relative px-8 py-4 bg-white text-zinc-950 text-lg font-medium rounded-sm hover:bg-zinc-200 transition-all duration-300 flex items-center gap-3">
               Start a Project
               <ArrowUpRight className="w-5 h-5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-            </button>
+            </a>
             <p className="text-zinc-500 text-sm mt-4">
               Response time: Within 24 hours
             </p>

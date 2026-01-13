@@ -13,7 +13,7 @@ const services = [
   },
   {
     title: "Desktop Software",
-    desc: "Secure, offline-first apps powered by Tauri & Rust.",
+    desc: "Secure, offline-first apps powered by Rust.",
     icon: <Monitor size={24} />,
     colSpan: "col-span-1",
     backgroundImage: "/bento/software.jpg"
@@ -26,7 +26,7 @@ const services = [
     backgroundImage: "/bento/mobile.jpeg"
   },
   {
-    title: "Customized Enterprise Systems", // Changed from "Custom Systems" to sound more professional
+    title: "Customized Enterprise Systems",
     desc: "Scalable ERP & CRM architectures for complex workflows.",
     icon: <Database size={24} />,
     colSpan: "col-span-1 md:col-span-2",
