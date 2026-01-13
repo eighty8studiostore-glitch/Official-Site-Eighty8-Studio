@@ -83,7 +83,7 @@ export default function ProductShowcase() {
             <div>
               <a href="/oneclick" className="group flex items-center gap-3 px-4 py-4 bg-zinc-900 text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg shadow-black/5 hover:shadow-xl hover:translate-y-[-2px]">
                 Book Your Demo Now 
-                <ArrowUpRight className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" size={20} />
+                <ArrowUpRight className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" size={10} />
               </a>
             </div>
           </div>
