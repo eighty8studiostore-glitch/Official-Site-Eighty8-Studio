@@ -85,7 +85,7 @@ export default function OneClickPage() {
              <FeatureCard 
                 icon={<Zap className="text-yellow-400" />}
                 title="Zero Latency"
-                desc="Built with Rust & Tauri. It runs locally on your machine, meaning 0ms lag time even with 100,000 records."
+                desc="Built with Rust. It runs locally on your machine, meaning 0ms lag time even with 100,000 records."
              />
              <FeatureCard 
                 icon={<Shield className="text-emerald-400" />}
