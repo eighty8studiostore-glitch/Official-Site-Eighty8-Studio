@@ -38,7 +38,7 @@ export default function ServicesBento() {
   return (
     <section id='services' className="relative py-20 px-6 max-w-7xl mx-auto overflow-hidden">
       {/* Background Decor Elements (Subtle Grid) */}
-      <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-zinc-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+      <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
 
       <div className="mb-16 md:flex md:items-end md:justify-between">
         <div className="max-w-2xl">

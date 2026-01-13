@@ -10,11 +10,11 @@ const clients = [
 
 export default function ClientGrid() {
   return (
-    <section className="py-16 bg-zinc-200 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800">
+    <section className="py-16 bg-zinc-200  border-b border-zinc-200 ">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         
         {/* Title Section */}
-        <h2 className="text-center text-sm font-semibold tracking-widest text-zinc-900 dark:text-zinc-400 uppercase mb-12">
+        <h2 className="text-center text-sm font-semibold tracking-widest text-zinc-900  uppercase mb-12">
           Brands and Associations that Trust Us
         </h2>
 
@@ -30,7 +30,7 @@ export default function ClientGrid() {
                 alt={`${client.name} Logo`}
                 fill
                 sizes="(max-width: 768px) 50vw, 25vw"
-                className="object-contain  transition-all duration-300 group-hover:grayscale-0 group-hover:opacity-100 dark:invert-[0.1] dark:group-hover:invert-0"
+                className="object-contain  transition-all duration-300 group-hover:grayscale-0 group-hover:opacity-100 "
               />
             </div>
           ))}

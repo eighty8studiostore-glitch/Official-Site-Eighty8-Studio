@@ -47,7 +47,7 @@ export default function Navbar() {
         "fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b",
         // Detail: Glassmorphism only activates on scroll for a cleaner initial look
         scrolled
-          ? "bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-zinc-200 dark:border-zinc-800 py-3"
+          ? "bg-white/80 backdrop-blur-md border-zinc-200 py-3"
           : "bg-transparent border-transparent py-5"
       )}
     >
