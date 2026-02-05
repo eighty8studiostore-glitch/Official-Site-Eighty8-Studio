@@ -40,130 +40,147 @@ export default function ContactForm() {
   };
 
   return (
-    <section id="contact" className="bg-white py-12 px-4 sm:px-6 lg:px-8">
+    <section id="contact" className="py-16">
       <div className="max-w-xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-light text-gray-900 sm:text-4xl font-serif">
-            Get in Touch
+          <div
+            className="inline-flex items-center gap-2 px-4 py-2 mb-4
+          bg-fuchsia-50 border border-fuchsia-200
+          rounded-full text-fuchsia-700 font-semibold text-sm"
+          >
+            Request a Demo
+          </div>
+
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
+            Let’s Talk About Your{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-600 via-cyan-600 to-yellow-500">
+              Printing Workflow
+            </span>
           </h2>
-          <p className="mt-4 text-lg text-gray-500 font-light">
-            Have a question or proposal? Fill out the form below.
+
+          <p className="text-gray-700 leading-relaxed">
+            Share a few details and our product expert will show you how 1Click
+            ERP can simplify invoicing, job tracking, and daily operations.
           </p>
         </div>
 
         {/* Form Container */}
-        <div className="bg-white rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8">
-          <form onSubmit={onSubmit} className="space-y-6">
-            
-            {/* Honeypot for Spam Protection (Hidden) */}
-            <input type="checkbox" name="botcheck" className="hidden" style={{ display: "none" }} />
+        <div
+          className="relative bg-gradient-to-b from-gray-50 via-gray-100 to-gray-50
+        rounded-3xl border border-gray-200
+        shadow-[0_30px_80px_rgba(0,0,0,0.12)]
+        p-8"
+        >
+          {/* CMYK Accent Line */}
+          <div
+            className="absolute inset-x-0 top-0 h-1 rounded-t-3xl
+          bg-gradient-to-r from-fuchsia-600 via-cyan-600 to-yellow-400"
+          />
 
-            {/* Name Input */}
+          <form onSubmit={onSubmit} className="space-y-6">
+            {/* Honeypot */}
+            <input type="checkbox" name="botcheck" className="hidden" />
+
+            {/* Name */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Full Name
               </label>
               <input
                 type="text"
                 name="name"
-                id="name"
                 required
-                placeholder="Your Name"
-                className="block w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200 ease-in-out"
+                placeholder="Your full name"
+                className="w-full px-4 py-3 rounded-lg
+              bg-white border border-gray-300
+              text-gray-900 placeholder-gray-400
+              focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40
+              transition-all"
               />
             </div>
 
-            {/* Email Input */}
+            {/* Mobile Number */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mobile Number
+              </label>
+              <input
+                type="tel"
+                name="mobile"
+                required
+                placeholder="XXXXXXXXXX"
+                className="w-full px-4 py-3 rounded-lg
+      bg-white border border-gray-300
+      text-gray-900 placeholder-gray-400
+      focus:outline-none focus:ring-2 focus:ring-cyan-500/40
+      transition-all"
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Email Address
               </label>
               <input
                 type="email"
                 name="email"
-                id="email"
                 required
-                placeholder="you@example.com"
-                className="block w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200 ease-in-out"
+                placeholder="you@company.com"
+                className="w-full px-4 py-3 rounded-lg
+              bg-white border border-gray-300
+              text-gray-900 placeholder-gray-400
+              focus:outline-none focus:ring-2 focus:ring-cyan-500/40
+              transition-all"
               />
             </div>
 
-            {/* Message Input */}
+            {/* Message */}
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-                Your Message
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tell us about your printing business
               </label>
               <textarea
                 name="message"
-                id="message"
-                required
                 rows="4"
-                placeholder="How can we help you?"
-                className="block w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200 ease-in-out resize-none"
-              ></textarea>
-            </div>
-
-            {/* Acceptance Checkbox */}
-            <div className="flex items-start">
-              {/* <div className="flex items-center h-5">
-                <input
-                  id="acceptance"
-                  name="acceptance"
-                  type="checkbox"
-                  required
-                  className="h-4 w-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900 cursor-pointer"
-                />
-              </div> */}
-              {/* <div className="ml-3 text-sm">
-                <label htmlFor="acceptance" className="font-light text-gray-600 cursor-pointer">
-                  I accept the{" "}
-                  <a href="#" className="font-medium text-gray-900 underline hover:text-gray-700">
-                    Terms of Service
-                  </a>{" "}
-                  and{" "}
-                  <a href="#" className="font-medium text-gray-900 underline hover:text-gray-700">
-                    Privacy Policy
-                  </a>
-                  .
-                </label>
-              </div> */}
+                required
+                placeholder="Number of machines, type of printing, current challenges…"
+                className="w-full px-4 py-3 rounded-lg
+              bg-white border border-gray-300
+              text-gray-900 placeholder-gray-400 resize-none
+              focus:outline-none focus:ring-2 focus:ring-yellow-400/40
+              transition-all"
+              />
             </div>
 
             {/* Submit Button */}
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                {loading ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Sending...
-                  </span>
-                ) : (
-                  "Send Message"
-                )}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 rounded-lg font-semibold text-white
+  bg-[rgb(239,88,75)] hover:bg-[rgb(220,72,60)]
+  shadow-lg shadow-[rgba(239,88,75,0.35)]
+  transition-all duration-300
+  disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? "Submitting..." : "Request Demo"}
+            </button>
           </form>
 
-          {/* Success/Error Feedback */}
+          {/* Feedback */}
           {result === "Success" && (
-            <div className="mt-4 p-4 rounded-md bg-green-50 border border-green-200">
+            <div className="mt-6 p-4 rounded-lg bg-green-50 border border-green-200">
               <p className="text-sm text-green-800 text-center">
-                Thank you! Your message has been sent successfully.
+                ✅ Thanks! Our team will contact you shortly.
               </p>
             </div>
           )}
+
           {result === "Error" && (
-            <div className="mt-4 p-4 rounded-md bg-red-50 border border-red-200">
+            <div className="mt-6 p-4 rounded-lg bg-red-50 border border-red-200">
               <p className="text-sm text-red-800 text-center">
-                Something went wrong. Please try again later.
+                ❌ Something went wrong. Please try again.
               </p>
             </div>
           )}
