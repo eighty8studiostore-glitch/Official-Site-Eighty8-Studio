@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#fdfdfd] overflow-x-hidden selection:bg-blue-500/30">
       <Navbar />
-      
+
       <div className="flex flex-col gap-0">
         <Hero />
         <ProductShowcase />
@@ -20,6 +20,7 @@ export default function Home() {
         <ServicesBento />
         <WhoWeAre />
         <ContactForm />
+        <div className="mt-5"></div>
         <Footer />
       </div>
     </main>
