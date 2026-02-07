@@ -49,7 +49,7 @@ export default function Navbar() {
             {/* LOGO */}
             <Link href="/" className="flex items-center gap-3 group">
               <Image
-                src="/Logo88.jpeg"
+                src="/logo.jpeg"
                 alt="Eighty8 Studio"
                 width={88}
                 height={48}
