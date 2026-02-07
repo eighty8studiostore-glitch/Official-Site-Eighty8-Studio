@@ -51,8 +51,8 @@ export default function Navbar() {
               <Image
                 src="/logo.jpeg"
                 alt="Eighty8 Studio"
-                width={88}
-                height={48}
+                width={30}
+                height={30}
                 priority
                 className="transition-transform duration-300 group-hover:scale-105"
               />
