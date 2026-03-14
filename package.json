@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.4.2",
+    "@react-three/fiber": "^9.5.0",
     "@react-three/postprocessing": "^3.0.4",
+    "@react-three/xr": "^6.6.29",
     "clsx": "^2.1.1",
+    "compromise": "^14.15.0",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.562.0",
