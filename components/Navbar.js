@@ -29,6 +29,7 @@ export default function Navbar() {
     { name: "Services", href: "/#services" },
     { name: "About", href: "/#about" },
     { name: "Contact", href: "/#contact" },
+    { name: "AI Paper Tool", href: "/tool1" },
   ];
 
   return (
