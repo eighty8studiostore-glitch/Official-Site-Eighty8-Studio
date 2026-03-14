@@ -10,7 +10,7 @@ import * as THREE from "three";
 const M_TO_IN = 39.3701;
 
 const store = createXRStore({
-  depthSensing: true,
+  depthSensing: false,
   hitTest: true,
 });
 
@@ -462,6 +462,7 @@ export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
                 widthPts={widthPts}
                 heightPts={heightPts}
                 onPointPlaced={handlePointPlaced}
+                onError={(msg) => setArError(msg)}
               />
             </XR>
           </Suspense>
