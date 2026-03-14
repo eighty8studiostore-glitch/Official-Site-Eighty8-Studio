@@ -1,70 +1,48 @@
 "use client";
 
-/**
- * ARMeasure.js  —  @react-three/xr v6 compatible
- * ─────────────────────────────────────────────────────────────────────────────
- * Breaking changes in @react-three/xr v6 vs v4/v5:
- *   • useHitTest()  REMOVED  →  replaced with useFrame() + raw WebXR API
- *   • onSessionStart / onSessionEnd props on <XR>  REMOVED
- *     →  replaced with XRSessionWatcher using useXR() hook
- *   • ARButton + XR + useXR  still present and unchanged
- *
- * Measurement Flow (two-phase, 4 taps total):
- *   WIDTH_P1 → WIDTH_P2  : first dimension captured (inches)
- *   HEIGHT_P1 → HEIGHT_P2 : second dimension captured (inches)
- *   COMPLETE : onMeasurementComplete({ width, height }) fired
- *
- * Props:
- *   onMeasurementComplete({ width, height })  — inches, always width ≥ height
- *   onClose()  — optional, dismisses parent modal
- * ─────────────────────────────────────────────────────────────────────────────
- */
-
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { ARButton, XR, useXR } from "@react-three/xr";
+import { createXRStore, XR, useXR, ARButton } from "@react-three/xr";
 import * as THREE from "three";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const M_TO_IN = 39.3701;
 
+const store = createXRStore({
+  depthSensing: true,
+  hitTest: true,
+});
+
 const PHASE = {
-  IDLE:      "IDLE",
-  WIDTH_P1:  "WIDTH_P1",
-  WIDTH_P2:  "WIDTH_P2",
+  IDLE: "IDLE",
+  WIDTH_P1: "WIDTH_P1",
+  WIDTH_P2: "WIDTH_P2",
   HEIGHT_P1: "HEIGHT_P1",
   HEIGHT_P2: "HEIGHT_P2",
-  COMPLETE:  "COMPLETE",
+  COMPLETE: "COMPLETE",
 };
 
 const PHASE_META = {
-  [PHASE.IDLE]:      { step: 0, axis: null,     hint: 'Press "Enter AR" below to start.' },
-  [PHASE.WIDTH_P1]:  { step: 1, axis: "Width",  hint: "Aim at one end of the piece and tap → Point A." },
-  [PHASE.WIDTH_P2]:  { step: 2, axis: "Width",  hint: "Aim at the opposite end and tap → Point B." },
+  [PHASE.IDLE]: { step: 0, axis: null, hint: 'Press "Enter AR" below to start.' },
+  [PHASE.WIDTH_P1]: { step: 1, axis: "Width", hint: "Aim at one end of the piece and tap → Point A." },
+  [PHASE.WIDTH_P2]: { step: 2, axis: "Width", hint: "Aim at the opposite end and tap → Point B." },
   [PHASE.HEIGHT_P1]: { step: 3, axis: "Height", hint: "Aim at one height edge and tap → Point A." },
   [PHASE.HEIGHT_P2]: { step: 4, axis: "Height", hint: "Aim at the opposite height edge and tap → Point B." },
-  [PHASE.COMPLETE]:  { step: 5, axis: null,     hint: "Both dimensions captured. Review below." },
+  [PHASE.COMPLETE]: { step: 5, axis: null, hint: "Both dimensions captured. Review below." },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const toInches   = (m)    => parseFloat((m * M_TO_IN).toFixed(2));
+const toInches = (m) => parseFloat((m * M_TO_IN).toFixed(2));
 const distInches = (a, b) => toInches(a.distanceTo(b));
 
 // ─── XRSessionWatcher ─────────────────────────────────────────────────────────
 // Must be rendered INSIDE <XR>. Watches isPresenting via useXR() hook.
 
 function XRSessionWatcher({ onStart, onEnd }) {
-  let xrState = null;
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    xrState = useXR();
-  } catch {
-    return null;
-  }
-
-  const isPresenting     = xrState?.isPresenting ?? false;
+  // Use a selector for better performance in v6
+  const isPresenting = useXR((state) => state.session !== null);
   const wasPresentingRef = useRef(false);
 
   useEffect(() => {
@@ -86,10 +64,10 @@ function XRSessionWatcher({ onStart, onEnd }) {
 // This replaces the removed useHitTest() hook with direct WebXR API calls.
 
 function HitTestManager({ reticleRef }) {
-  const hitTestSourceRef        = useRef(null);
-  const hitTestSourcePending    = useRef(false);
+  const hitTestSourceRef = useRef(null);
+  const hitTestSourcePending = useRef(false);
   const sessionEndListenerAdded = useRef(false);
-  const m4                      = useRef(new THREE.Matrix4());
+  const m4 = useRef(new THREE.Matrix4());
 
   useFrame((state, _delta, xrFrame) => {
     if (!xrFrame) {
@@ -105,7 +83,7 @@ function HitTestManager({ reticleRef }) {
       sessionEndListenerAdded.current = true;
       session.addEventListener("end", () => {
         hitTestSourceRef.current?.cancel?.();
-        hitTestSourceRef.current     = null;
+        hitTestSourceRef.current = null;
         hitTestSourcePending.current = false;
         sessionEndListenerAdded.current = false;
         if (reticleRef.current) reticleRef.current.visible = false;
@@ -119,7 +97,7 @@ function HitTestManager({ reticleRef }) {
         .requestReferenceSpace("viewer")
         .then((viewerSpace) => session.requestHitTestSource({ space: viewerSpace }))
         .then((source) => {
-          hitTestSourceRef.current     = source;
+          hitTestSourceRef.current = source;
           hitTestSourcePending.current = false;
         })
         .catch((err) => {
@@ -136,7 +114,7 @@ function HitTestManager({ reticleRef }) {
     if (!refSpace) return;
 
     const results = xrFrame.getHitTestResults(hitTestSourceRef.current);
-    const mesh    = reticleRef.current;
+    const mesh = reticleRef.current;
     if (!mesh) return;
 
     if (results.length > 0) {
@@ -168,7 +146,7 @@ function MeasureLine({ points, color }) {
 
   return (
     <line ref={lineRef}>
-      <bufferGeometry  attach="geometry" />
+      <bufferGeometry attach="geometry" />
       <lineBasicMaterial attach="material" color={color} linewidth={2} />
     </line>
   );
@@ -180,8 +158,8 @@ function MeasurementScene({ phase, widthPts, heightPts, onPointPlaced }) {
   const reticleRef = useRef();
 
   const reticleColor =
-    [PHASE.WIDTH_P1, PHASE.WIDTH_P2].includes(phase)   ? "#22c55e" :
-    [PHASE.HEIGHT_P1, PHASE.HEIGHT_P2].includes(phase) ? "#f59e0b" : "#3b82f6";
+    [PHASE.WIDTH_P1, PHASE.WIDTH_P2].includes(phase) ? "#22c55e" :
+      [PHASE.HEIGHT_P1, PHASE.HEIGHT_P2].includes(phase) ? "#f59e0b" : "#3b82f6";
 
   const handleTap = useCallback(() => {
     const mesh = reticleRef.current;
@@ -238,8 +216,8 @@ function MeasurementScene({ phase, widthPts, heightPts, onPointPlaced }) {
 // ─── ManualEntryForm ──────────────────────────────────────────────────────────
 
 function ManualEntryForm({ onMeasurementComplete }) {
-  const [w, setW]     = useState("");
-  const [h, setH]     = useState("");
+  const [w, setW] = useState("");
+  const [h, setH] = useState("");
   const [err, setErr] = useState("");
 
   const handleSubmit = (e) => {
@@ -289,14 +267,14 @@ function ManualEntryForm({ onMeasurementComplete }) {
 // ─── Stepper ──────────────────────────────────────────────────────────────────
 
 function Stepper({ phase }) {
-  const steps   = ["Width A", "Width B", "Height A", "Height B", "Done"];
+  const steps = ["Width A", "Width B", "Height A", "Height B", "Done"];
   const current = PHASE_META[phase]?.step ?? 0;
 
   return (
     <div className="flex items-center gap-1 px-4">
       {steps.map((label, i) => {
         const n = i + 1;
-        const done   = current > n;
+        const done = current > n;
         const active = current === n;
         return (
           <div key={label} className="flex items-center gap-1 flex-1 min-w-0">
@@ -336,12 +314,12 @@ export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
   }, []);
 
   // Measurement state
-  const [phase,     setPhase]     = useState(PHASE.IDLE);
-  const [widthPts,  setWidthPts]  = useState([]);
+  const [phase, setPhase] = useState(PHASE.IDLE);
+  const [widthPts, setWidthPts] = useState([]);
   const [heightPts, setHeightPts] = useState([]);
-  const [widthIn,   setWidthIn]   = useState(null);
-  const [heightIn,  setHeightIn]  = useState(null);
-  const [arError,   setArError]   = useState("");
+  const [widthIn, setWidthIn] = useState(null);
+  const [heightIn, setHeightIn] = useState(null);
+  const [arError, setArError] = useState("");
 
   const handlePointPlaced = useCallback((point) => {
     setPhase((prev) => {
@@ -385,7 +363,7 @@ export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
   const handleConfirm = () => {
     if (widthIn == null || heightIn == null) return;
     onMeasurementComplete({
-      width:  Math.max(widthIn, heightIn),
+      width: Math.max(widthIn, heightIn),
       height: Math.min(widthIn, heightIn),
     });
   };
@@ -435,7 +413,7 @@ export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
       {(widthIn !== null || heightIn !== null) && (
         <div className="mx-4 mb-2 grid grid-cols-2 gap-2">
           {[
-            { label: "Width",  val: widthIn,  ac: "bg-green-50 border-green-300", tc: "text-green-700", nc: "text-green-800" },
+            { label: "Width", val: widthIn, ac: "bg-green-50 border-green-300", tc: "text-green-700", nc: "text-green-800" },
             { label: "Height", val: heightIn, ac: "bg-amber-50 border-amber-300", tc: "text-amber-700", nc: "text-amber-800" },
           ].map(({ label, val, ac, tc, nc }) => (
             <div key={label}
@@ -493,8 +471,9 @@ export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
       {/* ARButton — injects the browser-native WebXR "Enter AR" / "Exit AR" button */}
       <div className="mx-4 my-3 flex justify-center">
         <ARButton
+          store={store}
           className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold text-sm shadow-lg transition-all active:scale-[0.97]"
-          sessionInit={{ requiredFeatures: ["hit-test"] }}
+          
         />
       </div>
 
