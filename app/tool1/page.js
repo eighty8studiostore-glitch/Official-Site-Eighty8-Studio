@@ -207,10 +207,7 @@ function LeadModal({ onClose, onSubmit, leadData, setLeadData, submitting }) {
               <FieldLabel>Full Name</FieldLabel>
               <StyledTextInput required placeholder="John Doe" value={leadData.name} onChange={(e) => setLeadData({...leadData, name: e.target.value})} />
             </div>
-            <div>
-              <FieldLabel>Business Name</FieldLabel>
-              <StyledTextInput required placeholder="Print Co. / Agency Name" value={leadData.business} onChange={(e) => setLeadData({...leadData, business: e.target.value})} />
-            </div>
+
             <div>
               <FieldLabel>Mobile Number</FieldLabel>
               <StyledTextInput required placeholder="+1 234 567 8900" type="tel" value={leadData.mobile} onChange={(e) => setLeadData({...leadData, mobile: e.target.value})} />
@@ -261,7 +258,7 @@ export default function PaperCalculator() {
   const [showLeadModal, setShowLeadModal] = useState(false);
   const [hasSubmittedLead, setHasSubmittedLead] = useState(false); // only ask once per session
   const [submittingLead, setSubmittingLead] = useState(false);
-  const [leadData, setLeadData] = useState({ name: "", business: "", mobile: "" });
+  const [leadData, setLeadData] = useState({ name: "",  mobile: "" });
 
   const applyPreset = useCallback((presetKey) => {
     const resolved = resolvePreset(presetKey);
@@ -355,10 +352,6 @@ export default function PaperCalculator() {
           name: leadData.name,
           "Business Name": leadData.business,
           "Mobile Number": leadData.mobile,
-          "--- Calculation Details ---": "---",
-          "Job Size": formData.jobSize,
-          "Total Copies": formData.jobCopies,
-          "Paper GSM": formData.gsm
         }),
       });
       
