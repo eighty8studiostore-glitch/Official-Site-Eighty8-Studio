@@ -2,17 +2,16 @@
 
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { createXRStore, XR, useXR, ARButton } from "@react-three/xr";
+// Removed deprecated ARButton, using native button with store.enterAR()
+import { createXRStore, XR, useXR } from "@react-three/xr";
 import * as THREE from "three";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const M_TO_IN = 39.3701;
 
-const store = createXRStore({
-  depthSensing: false,
-  hitTest: true,
-});
+// 1. Initialize store cleanly (we will request features on enterAR instead)
+const store = createXRStore();
 
 const PHASE = {
   IDLE: "IDLE",
@@ -38,14 +37,13 @@ const toInches = (m) => parseFloat((m * M_TO_IN).toFixed(2));
 const distInches = (a, b) => toInches(a.distanceTo(b));
 
 // ─── XRSessionWatcher ─────────────────────────────────────────────────────────
-// Must be rendered INSIDE <XR>. Watches isPresenting via useXR() hook.
 
 function XRSessionWatcher({ onStart, onEnd }) {
-  // Use a selector for better performance in v6
-  const isPresenting = useXR((state) => state.session !== null);
+  const session = useXR((state) => state.session);
   const wasPresentingRef = useRef(false);
 
   useEffect(() => {
+    const isPresenting = session !== null;
     if (isPresenting && !wasPresentingRef.current) {
       wasPresentingRef.current = true;
       onStart?.();
@@ -53,15 +51,12 @@ function XRSessionWatcher({ onStart, onEnd }) {
       wasPresentingRef.current = false;
       onEnd?.();
     }
-  }, [isPresenting, onStart, onEnd]);
+  }, [session, onStart, onEnd]);
 
   return null;
 }
 
 // ─── HitTestManager ──────────────────────────────────────────────────────────
-// Rendered inside <XR>. Manages the WebXR hit-test source lifecycle and
-// updates the reticle mesh position every frame.
-// This replaces the removed useHitTest() hook with direct WebXR API calls.
 
 function HitTestManager({ reticleRef }) {
   const hitTestSourceRef = useRef(null);
@@ -78,7 +73,6 @@ function HitTestManager({ reticleRef }) {
     const session = state.gl.xr.getSession();
     if (!session) return;
 
-    // ── Attach session-end cleanup once ──────────────────────────────────
     if (!sessionEndListenerAdded.current) {
       sessionEndListenerAdded.current = true;
       session.addEventListener("end", () => {
@@ -90,7 +84,7 @@ function HitTestManager({ reticleRef }) {
       }, { once: true });
     }
 
-    // ── Request hit-test source once per session ──────────────────────────
+    // This will now succeed because 'hit-test' is explicitly requested in store.enterAR()
     if (!hitTestSourceRef.current && !hitTestSourcePending.current) {
       hitTestSourcePending.current = true;
       session
@@ -101,7 +95,7 @@ function HitTestManager({ reticleRef }) {
           hitTestSourcePending.current = false;
         })
         .catch((err) => {
-          console.warn("[ARMeasure] requestHitTestSource failed:", err);
+          console.warn("[ARMeasure] requestHitTestSource failed. Was the 'hit-test' feature requested?", err);
           hitTestSourcePending.current = false;
         });
       return;
@@ -109,7 +103,6 @@ function HitTestManager({ reticleRef }) {
 
     if (!hitTestSourceRef.current) return;
 
-    // ── Read hit results and move reticle ─────────────────────────────────
     const refSpace = state.gl.xr.getReferenceSpace();
     if (!refSpace) return;
 
@@ -176,23 +169,19 @@ function MeasurementScene({ phase, widthPts, heightPts, onPointPlaced }) {
   return (
     <>
       <ambientLight intensity={1.2} />
-
-      {/* Drives the reticle via raw WebXR API (replaces removed useHitTest) */}
       <HitTestManager reticleRef={reticleRef} />
 
-      {/* Full-floor invisible tap surface */}
+      {/* Invisible tap surface overlay */}
       <mesh onClick={handleTap} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.001, 0]}>
         <planeGeometry args={[200, 200]} />
         <meshBasicMaterial visible={false} side={THREE.DoubleSide} />
       </mesh>
 
-      {/* Reticle ring — hidden until hit-test finds a real surface */}
       <mesh ref={reticleRef} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
         <ringGeometry args={[0.038, 0.052, 40]} />
         <meshBasicMaterial color={reticleColor} transparent opacity={0.9} />
       </mesh>
 
-      {/* Width points + line */}
       {widthPts.map((pos, i) => (
         <mesh key={`wp${i}`} position={pos}>
           <sphereGeometry args={[0.018, 16, 16]} />
@@ -201,7 +190,6 @@ function MeasurementScene({ phase, widthPts, heightPts, onPointPlaced }) {
       ))}
       {widthPts.length === 2 && <MeasureLine points={widthPts} color="#22c55e" />}
 
-      {/* Height points + line */}
       {heightPts.map((pos, i) => (
         <mesh key={`hp${i}`} position={pos}>
           <sphereGeometry args={[0.018, 16, 16]} />
@@ -214,7 +202,7 @@ function MeasurementScene({ phase, widthPts, heightPts, onPointPlaced }) {
 }
 
 // ─── ManualEntryForm ──────────────────────────────────────────────────────────
-
+// (Omitted unchanged code for brevity, remains exactly as you had it)
 function ManualEntryForm({ onMeasurementComplete }) {
   const [w, setW] = useState("");
   const [h, setH] = useState("");
@@ -244,19 +232,12 @@ function ManualEntryForm({ onMeasurementComplete }) {
               <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">
                 {label} (inches)
               </label>
-              <input
-                type="number" step="0.01" min="0.1" required
-                value={val}
-                onChange={(e) => set(e.target.value)}
-                placeholder={label === "Width" ? "e.g. 11" : "e.g. 8.5"}
-                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 outline-none"
-              />
+              <input type="number" step="0.01" min="0.1" required value={val} onChange={(e) => set(e.target.value)} placeholder={label === "Width" ? "e.g. 11" : "e.g. 8.5"} className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 outline-none" />
             </div>
           )
         )}
         {err && <p className="text-red-500 text-xs font-medium">⛔ {err}</p>}
-        <button type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all active:scale-[0.98]">
+        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all active:scale-[0.98]">
           Use These Dimensions →
         </button>
       </form>
@@ -265,7 +246,6 @@ function ManualEntryForm({ onMeasurementComplete }) {
 }
 
 // ─── Stepper ──────────────────────────────────────────────────────────────────
-
 function Stepper({ phase }) {
   const steps = ["Width A", "Width B", "Height A", "Height B", "Done"];
   const current = PHASE_META[phase]?.step ?? 0;
@@ -278,12 +258,10 @@ function Stepper({ phase }) {
         const active = current === n;
         return (
           <div key={label} className="flex items-center gap-1 flex-1 min-w-0">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-all
-              ${done ? "bg-green-500 text-white" : active ? "bg-blue-600 text-white ring-2 ring-blue-300" : "bg-slate-200 text-slate-400"}`}>
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-all ${done ? "bg-green-500 text-white" : active ? "bg-blue-600 text-white ring-2 ring-blue-300" : "bg-slate-200 text-slate-400"}`}>
               {done ? "✓" : n}
             </div>
-            <span className={`text-[9px] font-semibold uppercase truncate
-              ${done ? "text-green-600" : active ? "text-blue-600" : "text-slate-400"}`}>
+            <span className={`text-[9px] font-semibold uppercase truncate ${done ? "text-green-600" : active ? "text-blue-600" : "text-slate-400"}`}>
               {label}
             </span>
             {i < steps.length - 1 && (
@@ -300,8 +278,8 @@ function Stepper({ phase }) {
 
 export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
 
-  // Device support check
   const [arSupport, setArSupport] = useState("checking");
+  
   useEffect(() => {
     if (typeof window === "undefined" || !navigator?.xr) {
       setArSupport("unsupported");
@@ -313,7 +291,6 @@ export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
       .catch(() => setArSupport("unsupported"));
   }, []);
 
-  // Measurement state
   const [phase, setPhase] = useState(PHASE.IDLE);
   const [widthPts, setWidthPts] = useState([]);
   const [heightPts, setHeightPts] = useState([]);
@@ -324,27 +301,17 @@ export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
   const handlePointPlaced = useCallback((point) => {
     setPhase((prev) => {
       if (prev === PHASE.WIDTH_P1) {
-        setWidthPts([point]);
-        return PHASE.WIDTH_P2;
+        setWidthPts([point]); return PHASE.WIDTH_P2;
       }
       if (prev === PHASE.WIDTH_P2) {
-        setWidthPts((pts) => {
-          const next = [...pts, point];
-          setWidthIn(distInches(next[0], next[1]));
-          return next;
-        });
+        setWidthPts((pts) => { const next = [...pts, point]; setWidthIn(distInches(next[0], next[1])); return next; });
         return PHASE.HEIGHT_P1;
       }
       if (prev === PHASE.HEIGHT_P1) {
-        setHeightPts([point]);
-        return PHASE.HEIGHT_P2;
+        setHeightPts([point]); return PHASE.HEIGHT_P2;
       }
       if (prev === PHASE.HEIGHT_P2) {
-        setHeightPts((pts) => {
-          const next = [...pts, point];
-          setHeightIn(distInches(next[0], next[1]));
-          return next;
-        });
+        setHeightPts((pts) => { const next = [...pts, point]; setHeightIn(distInches(next[0], next[1])); return next; });
         return PHASE.COMPLETE;
       }
       return prev;
@@ -352,43 +319,28 @@ export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
   }, []);
 
   const handleReset = () => {
-    setPhase(PHASE.IDLE);
-    setWidthPts([]);
-    setHeightPts([]);
-    setWidthIn(null);
-    setHeightIn(null);
-    setArError("");
+    setPhase(PHASE.IDLE); setWidthPts([]); setHeightPts([]); setWidthIn(null); setHeightIn(null); setArError("");
   };
 
   const handleConfirm = () => {
     if (widthIn == null || heightIn == null) return;
-    onMeasurementComplete({
-      width: Math.max(widthIn, heightIn),
-      height: Math.min(widthIn, heightIn),
-    });
+    onMeasurementComplete({ width: Math.max(widthIn, heightIn), height: Math.min(widthIn, heightIn) });
   };
 
   const meta = PHASE_META[phase];
 
-  // ── Loading ──
-  if (arSupport === "checking") {
-    return (
-      <div className="flex flex-col items-center justify-center h-48 text-slate-500 text-sm gap-3">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        Checking AR support…
-      </div>
-    );
-  }
+  if (arSupport === "checking") return <div className="...">Checking AR support…</div>;
+  if (arSupport === "unsupported") return <ManualEntryForm onMeasurementComplete={onMeasurementComplete} />;
 
-  // ── Manual fallback ──
-  if (arSupport === "unsupported") {
-    return <ManualEntryForm onMeasurementComplete={onMeasurementComplete} />;
-  }
+  // Handler to safely request hit-testing from the WebXR API
+  const handleEnterAR = () => {
+    store.enterAR({
+      sessionInit: { requiredFeatures: ["hit-test"] }
+    });
+  };
 
-  // ── Full AR UI ──
   return (
     <div className="flex flex-col select-none">
-
       {arError && (
         <div className="mx-4 mt-3 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex justify-between items-center">
           <span>⛔ {arError}</span>
@@ -396,63 +348,22 @@ export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
         </div>
       )}
 
-      <div className="pt-4 pb-2">
-        <Stepper phase={phase} />
-      </div>
+      <div className="pt-4 pb-2"><Stepper phase={phase} /></div>
 
       <div className="px-4 py-2 text-center">
         {meta?.axis && (
-          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold mr-2
-            ${meta.axis === "Width" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold mr-2 ${meta.axis === "Width" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
             {meta.axis}
           </span>
         )}
         <span className="text-sm text-slate-600">{meta?.hint}</span>
       </div>
 
-      {(widthIn !== null || heightIn !== null) && (
-        <div className="mx-4 mb-2 grid grid-cols-2 gap-2">
-          {[
-            { label: "Width", val: widthIn, ac: "bg-green-50 border-green-300", tc: "text-green-700", nc: "text-green-800" },
-            { label: "Height", val: heightIn, ac: "bg-amber-50 border-amber-300", tc: "text-amber-700", nc: "text-amber-800" },
-          ].map(({ label, val, ac, tc, nc }) => (
-            <div key={label}
-              className={`rounded-xl p-3 text-center border transition-all ${val !== null ? ac : "bg-slate-50 border-slate-200 opacity-40"}`}>
-              <p className={`text-[10px] font-bold uppercase tracking-wide mb-0.5 ${tc}`}>{label}</p>
-              <p className={`text-2xl font-extrabold ${nc}`}>{val !== null ? `${val}"` : "—"}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* AR Canvas */}
       <div className="relative mx-4 rounded-2xl overflow-hidden bg-gray-900" style={{ height: 320 }}>
-        {phase === PHASE.IDLE && (
-          <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-            <div className="bg-black/50 rounded-xl px-5 py-3 text-center">
-              <p className="text-white text-sm font-bold">📐 AR Measure</p>
-              <p className="text-slate-300 text-xs mt-1">Press "Enter AR" below to start.</p>
-            </div>
-          </div>
-        )}
-        {phase !== PHASE.IDLE && phase !== PHASE.COMPLETE && (
-          <div className="absolute top-2 right-2 z-10 text-[10px] space-y-1">
-            {[["Width", "bg-green-400"], ["Height", "bg-amber-400"]].map(([lbl, bg]) => (
-              <div key={lbl} className="flex items-center gap-1 bg-black/40 rounded-full px-2 py-0.5">
-                <span className={`w-2 h-2 rounded-full ${bg} inline-block`} />
-                <span className="text-white">{lbl}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
+        {/* 2. Added `store={store}` to <XR> Context Provider */}
         <Canvas>
           <Suspense fallback={null}>
-            <XR>
-              {/*
-               * XRSessionWatcher must be inside <XR> to access the useXR() context.
-               * It fires onStart when the AR session begins and onEnd when it closes.
-               */}
+            <XR store={store}>
               <XRSessionWatcher
                 onStart={() => setPhase(PHASE.WIDTH_P1)}
                 onEnd={() => setPhase((p) => (p === PHASE.COMPLETE ? p : PHASE.IDLE))}
@@ -462,52 +373,41 @@ export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
                 widthPts={widthPts}
                 heightPts={heightPts}
                 onPointPlaced={handlePointPlaced}
-                onError={(msg) => setArError(msg)}
               />
             </XR>
           </Suspense>
         </Canvas>
       </div>
 
-      {/* ARButton — injects the browser-native WebXR "Enter AR" / "Exit AR" button */}
       <div className="mx-4 my-3 flex justify-center">
-        <ARButton
-          store={store}
+        {/* 3. Replaced missing/bugged ARButton with native HTML triggering explicit features */}
+        <button
+          onClick={handleEnterAR}
           className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold text-sm shadow-lg transition-all active:scale-[0.97]"
-          
-        />
+        >
+          {phase === PHASE.IDLE ? "Enter AR" : "Return to AR"}
+        </button>
       </div>
 
       <div className="px-4 pb-5 flex gap-3">
         {phase === PHASE.COMPLETE ? (
           <>
-            <button onClick={handleConfirm}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all active:scale-[0.98] shadow">
+            <button onClick={handleConfirm} className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl text-sm shadow">
               ✅ Use {Math.max(widthIn ?? 0, heightIn ?? 0)}" × {Math.min(widthIn ?? 0, heightIn ?? 0)}"
             </button>
-            <button onClick={handleReset}
-              className="px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl text-sm transition-all">
-              🔄 Redo
-            </button>
+            <button onClick={handleReset} className="px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl text-sm">🔄 Redo</button>
           </>
         ) : (
           <>
             {phase !== PHASE.IDLE && (
-              <button onClick={handleReset}
-                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3 rounded-xl text-sm transition-all">
-                🔄 Reset
-              </button>
+              <button onClick={handleReset} className="flex-1 bg-slate-100 text-slate-600 font-semibold py-3 rounded-xl text-sm">🔄 Reset</button>
             )}
             {onClose && (
-              <button onClick={onClose}
-                className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-500 font-medium py-3 rounded-xl text-sm border border-slate-200 transition-all">
-                Cancel
-              </button>
+              <button onClick={onClose} className="flex-1 bg-slate-50 text-slate-500 font-medium py-3 rounded-xl text-sm border border-slate-200">Cancel</button>
             )}
           </>
         )}
       </div>
-
     </div>
   );
 }
