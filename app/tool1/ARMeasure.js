@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-// Removed deprecated ARButton, using native button with store.enterAR()
 import { createXRStore, XR, useXR } from "@react-three/xr";
 import * as THREE from "three";
 
@@ -10,7 +9,6 @@ import * as THREE from "three";
 
 const M_TO_IN = 39.3701;
 
-// 1. Initialize store cleanly (we will request features on enterAR instead)
 const store = createXRStore();
 
 const PHASE = {
@@ -24,11 +22,11 @@ const PHASE = {
 
 const PHASE_META = {
   [PHASE.IDLE]: { step: 0, axis: null, hint: 'Press "Enter AR" below to start.' },
-  [PHASE.WIDTH_P1]: { step: 1, axis: "Width", hint: "Aim at one end of the piece and tap → Point A." },
-  [PHASE.WIDTH_P2]: { step: 2, axis: "Width", hint: "Aim at the opposite end and tap → Point B." },
-  [PHASE.HEIGHT_P1]: { step: 3, axis: "Height", hint: "Aim at one height edge and tap → Point A." },
-  [PHASE.HEIGHT_P2]: { step: 4, axis: "Height", hint: "Aim at the opposite height edge and tap → Point B." },
-  [PHASE.COMPLETE]: { step: 5, axis: null, hint: "Both dimensions captured. Review below." },
+  [PHASE.WIDTH_P1]: { step: 1, axis: "Width", hint: "Aim at one end and TAP SCREEN → Point A" },
+  [PHASE.WIDTH_P2]: { step: 2, axis: "Width", hint: "Aim at opposite end and TAP SCREEN → Point B" },
+  [PHASE.HEIGHT_P1]: { step: 3, axis: "Height", hint: "Aim at top edge and TAP SCREEN → Point A" },
+  [PHASE.HEIGHT_P2]: { step: 4, axis: "Height", hint: "Aim at bottom edge and TAP SCREEN → Point B" },
+  [PHASE.COMPLETE]: { step: 5, axis: null, hint: "Captured! Exit AR (X) to review." },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -84,7 +82,6 @@ function HitTestManager({ reticleRef }) {
       }, { once: true });
     }
 
-    // This will now succeed because 'hit-test' is explicitly requested in store.enterAR()
     if (!hitTestSourceRef.current && !hitTestSourcePending.current) {
       hitTestSourcePending.current = true;
       session
@@ -95,7 +92,7 @@ function HitTestManager({ reticleRef }) {
           hitTestSourcePending.current = false;
         })
         .catch((err) => {
-          console.warn("[ARMeasure] requestHitTestSource failed. Was the 'hit-test' feature requested?", err);
+          console.warn("[ARMeasure] requestHitTestSource failed.", err);
           hitTestSourcePending.current = false;
         });
       return;
@@ -149,17 +146,29 @@ function MeasureLine({ points, color }) {
 
 function MeasurementScene({ phase, widthPts, heightPts, onPointPlaced }) {
   const reticleRef = useRef();
+  const session = useXR((state) => state.session);
 
   const reticleColor =
     [PHASE.WIDTH_P1, PHASE.WIDTH_P2].includes(phase) ? "#22c55e" :
       [PHASE.HEIGHT_P1, PHASE.HEIGHT_P2].includes(phase) ? "#f59e0b" : "#3b82f6";
 
-  const handleTap = useCallback(() => {
-    const mesh = reticleRef.current;
-    if (!mesh?.visible) return;
-    if (phase === PHASE.COMPLETE || phase === PHASE.IDLE) return;
-    onPointPlaced(mesh.position.clone());
-  }, [phase, onPointPlaced]);
+  // 1. FIX: Listen natively to WebXR "select" event (which triggers when you tap the screen in AR)
+  useEffect(() => {
+    if (!session) return;
+
+    const handleSelect = () => {
+      const mesh = reticleRef.current;
+      // Only place a point if the reticle is currently visible on a surface
+      if (mesh && mesh.visible) {
+        if (phase !== PHASE.COMPLETE && phase !== PHASE.IDLE) {
+          onPointPlaced(mesh.position.clone());
+        }
+      }
+    };
+
+    session.addEventListener("select", handleSelect);
+    return () => session.removeEventListener("select", handleSelect);
+  }, [session, phase, onPointPlaced]);
 
   const ptColor = (axis, isFirst) =>
     axis === "width"
@@ -171,12 +180,8 @@ function MeasurementScene({ phase, widthPts, heightPts, onPointPlaced }) {
       <ambientLight intensity={1.2} />
       <HitTestManager reticleRef={reticleRef} />
 
-      {/* Invisible tap surface overlay */}
-      <mesh onClick={handleTap} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.001, 0]}>
-        <planeGeometry args={[200, 200]} />
-        <meshBasicMaterial visible={false} side={THREE.DoubleSide} />
-      </mesh>
-
+      {/* 2. FIX: Removed the invisible click plane that was breaking touch inputs */}
+      
       <mesh ref={reticleRef} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
         <ringGeometry args={[0.038, 0.052, 40]} />
         <meshBasicMaterial color={reticleColor} transparent opacity={0.9} />
@@ -202,7 +207,7 @@ function MeasurementScene({ phase, widthPts, heightPts, onPointPlaced }) {
 }
 
 // ─── ManualEntryForm ──────────────────────────────────────────────────────────
-// (Omitted unchanged code for brevity, remains exactly as you had it)
+
 function ManualEntryForm({ onMeasurementComplete }) {
   const [w, setW] = useState("");
   const [h, setH] = useState("");
@@ -246,6 +251,7 @@ function ManualEntryForm({ onMeasurementComplete }) {
 }
 
 // ─── Stepper ──────────────────────────────────────────────────────────────────
+
 function Stepper({ phase }) {
   const steps = ["Width A", "Width B", "Height A", "Height B", "Done"];
   const current = PHASE_META[phase]?.step ?? 0;
@@ -277,7 +283,6 @@ function Stepper({ phase }) {
 // ─── ARMeasureTool (main export) ──────────────────────────────────────────────
 
 export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
-
   const [arSupport, setArSupport] = useState("checking");
   
   useEffect(() => {
@@ -329,10 +334,9 @@ export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
 
   const meta = PHASE_META[phase];
 
-  if (arSupport === "checking") return <div className="...">Checking AR support…</div>;
+  if (arSupport === "checking") return <div className="flex items-center justify-center h-40">Checking AR support…</div>;
   if (arSupport === "unsupported") return <ManualEntryForm onMeasurementComplete={onMeasurementComplete} />;
 
-  // Handler to safely request hit-testing from the WebXR API
   const handleEnterAR = () => {
     store.enterAR({
       sessionInit: { requiredFeatures: ["hit-test"] }
@@ -356,11 +360,10 @@ export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
             {meta.axis}
           </span>
         )}
-        <span className="text-sm text-slate-600">{meta?.hint}</span>
+        <span className="text-sm text-slate-600 font-medium">{meta?.hint}</span>
       </div>
 
       <div className="relative mx-4 rounded-2xl overflow-hidden bg-gray-900" style={{ height: 320 }}>
-        {/* 2. Added `store={store}` to <XR> Context Provider */}
         <Canvas>
           <Suspense fallback={null}>
             <XR store={store}>
@@ -380,7 +383,6 @@ export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
       </div>
 
       <div className="mx-4 my-3 flex justify-center">
-        {/* 3. Replaced missing/bugged ARButton with native HTML triggering explicit features */}
         <button
           onClick={handleEnterAR}
           className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold text-sm shadow-lg transition-all active:scale-[0.97]"
@@ -392,18 +394,18 @@ export default function ARMeasureTool({ onMeasurementComplete, onClose }) {
       <div className="px-4 pb-5 flex gap-3">
         {phase === PHASE.COMPLETE ? (
           <>
-            <button onClick={handleConfirm} className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl text-sm shadow">
+            <button onClick={handleConfirm} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm shadow transition-all">
               ✅ Use {Math.max(widthIn ?? 0, heightIn ?? 0)}" × {Math.min(widthIn ?? 0, heightIn ?? 0)}"
             </button>
-            <button onClick={handleReset} className="px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl text-sm">🔄 Redo</button>
+            <button onClick={handleReset} className="px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl text-sm transition-all">🔄 Redo</button>
           </>
         ) : (
           <>
             {phase !== PHASE.IDLE && (
-              <button onClick={handleReset} className="flex-1 bg-slate-100 text-slate-600 font-semibold py-3 rounded-xl text-sm">🔄 Reset</button>
+              <button onClick={handleReset} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3 rounded-xl text-sm transition-all">🔄 Reset</button>
             )}
             {onClose && (
-              <button onClick={onClose} className="flex-1 bg-slate-50 text-slate-500 font-medium py-3 rounded-xl text-sm border border-slate-200">Cancel</button>
+              <button onClick={onClose} className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-500 font-medium py-3 rounded-xl text-sm border border-slate-200 transition-all">Cancel</button>
             )}
           </>
         )}
